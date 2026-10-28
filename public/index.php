@@ -30,7 +30,7 @@ if (!in_array($page, $publicPages, true) && !isset($_SESSION['user_id'])) {
 // Role restrictions: CIANAN users & production operators use Service Request only.
 // Maintenance Inventory stays off-limits to them (maintenance technicians/admin/legacy users only).
 $role = $_SESSION['role'] ?? '';
-$srOnlyPages = ['service_request', 'create_service_request', 'assign_service_request', 'complete_service_request', 'logout', 'logout_helper'];
+$srOnlyPages = ['service_request', 'create_service_request', 'assign_service_request', 'complete_service_request', 'logout'];
 if (in_array($role, ['cianan_user', 'production_operator'], true) && !in_array($page, $srOnlyPages, true)) {
     header('Location: /CIANANMRO/public/index.php?page=service_request');
     exit;
@@ -39,7 +39,7 @@ if (in_array($role, ['cianan_user', 'production_operator'], true) && !in_array($
 // Internal pages use the sidebar layout; auth pages and POST handler routes
 // render standalone (handlers must be able to send redirect headers cleanly)
 $standalonePages = [
-    'login', 'register', 'thermal_slip',
+    'login', 'register', 'logout', 'thermal_slip',
     'submit_request', 'receive_request', 'cancel_request', 'submit_withdrawal',
     'submit_consumable', 'update_consumable', 'upload_consumables', 'delete_consumable',
     'export_report_csv',
