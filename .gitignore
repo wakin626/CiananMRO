@@ -1,0 +1,8 @@
+# Runtime uploads
+public/uploads/
+
+# IDE / system
+.idea/
+.vscode/
+Thumbs.db
+
