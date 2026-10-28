@@ -89,15 +89,74 @@ class ServiceRequest
         ]);
     }
 
-    public function assign(int $id, string $technician): bool
+    public function getAssignmentsMap(array $ids): array
     {
+        if (empty($ids)) {
+            return [];
+        }
+        $in = implode(',', array_fill(0, count($ids), '?'));
         $stmt = $this->db->prepare(
-            "UPDATE service_requests
-             SET technician = :technician, status = 'ON GOING', assigned_at = NOW()
-             WHERE id = :id AND status = 'REQUEST'"
+            "SELECT service_request_id, technician, shift
+             FROM service_request_techs
+             WHERE service_request_id IN ($in)
+             ORDER BY id ASC"
         );
-        $stmt->execute([':technician' => $technician, ':id' => $id]);
-        return $stmt->rowCount() > 0;
+        $stmt->execute($ids);
+
+        $map = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $map[$row['service_request_id']][] =
+                htmlspecialchars($row['technician'], ENT_QUOTES, 'UTF-8')
+                . ' &middot; ' . htmlspecialchars($row['shift'], ENT_QUOTES, 'UTF-8');
+        }
+        return $map;
+    }
+
+    public function assign(int $id, array $technicians, string $shift): bool
+    {
+        $technicians = array_values(array_filter(array_map('trim', $technicians), 'strlen'));
+        if (empty($technicians)) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare('SELECT status FROM service_requests WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch();
+        if ($row === false || $row['status'] !== 'REQUEST') {
+            return false;
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $insert = $this->db->prepare(
+                "INSERT INTO service_request_techs (service_request_id, technician, shift)
+                 VALUES (:sr_id, :technician, :shift)"
+            );
+            foreach ($technicians as $tech) {
+                $insert->execute([
+                    ':sr_id'      => $id,
+                    ':technician' => $tech,
+                    ':shift'      => $shift,
+                ]);
+            }
+
+            $this->db->prepare(
+                "UPDATE service_requests
+                 SET technician = :legacy, status = 'ON GOING', assigned_at = NOW()
+                 WHERE id = :id"
+            )->execute([
+                ':legacy' => implode(', ', $technicians),
+                ':id'     => $id,
+            ]);
+
+            $this->db->commit();
+            return true;
+        } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return false;
+        }
     }
 
     public function complete(int $id): bool

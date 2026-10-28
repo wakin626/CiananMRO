@@ -101,7 +101,9 @@ class ConsumablesController
         }
 
         $consumables = $this->consumable->getAll();
+        require_once __DIR__ . '/../views/layout/header.php';
         require __DIR__ . '/../views/consumables/index.php';
+        require __DIR__ . '/../views/layout/footer.php';
     }
 
     public function handleUpdate(): void
@@ -130,7 +132,9 @@ class ConsumablesController
         }
 
         $consumables = $this->consumable->getAll();
+        require_once __DIR__ . '/../views/layout/header.php';
         require __DIR__ . '/../views/consumables/index.php';
+        require __DIR__ . '/../views/layout/footer.php';
     }
 
     public function handleDelete(): void
@@ -264,6 +268,8 @@ class ConsumablesController
         }
 
         $consumables = $this->consumable->getAll();
+        require_once __DIR__ . '/../views/layout/header.php';
         require __DIR__ . '/../views/consumables/index.php';
+        require __DIR__ . '/../views/layout/footer.php';
     }
 }

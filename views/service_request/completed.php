@@ -38,7 +38,11 @@
                             <td><?= nl2br(htmlspecialchars($sr['description'])) ?></td>
                             <td><?= htmlspecialchars($sr['requested_by']) ?><br><small><?= htmlspecialchars($sr['department'] ?: '') ?></small></td>
                             <td><?= htmlspecialchars($sr['plant'] ?: '') ?></td>
-                            <td><?= htmlspecialchars($sr['technician'] ?: '') ?></td>
+                            <td>
+                                <?php foreach ($assignMap[(int) $sr['id']] ?? [] as $techLabel) {
+                                    echo $techLabel . '<br>';
+                                    } ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

@@ -63,9 +63,9 @@ if (isset($flashMap[$flashStatus])):
                             <span>By: <?= htmlspecialchars($card['requested_by']) ?><?= $card['department'] ? ' &mdash; ' . htmlspecialchars($card['department']) : '' ?></span>
                             <span><?= htmlspecialchars(date('Y-m-d', strtotime($card['created_at']))) ?><?= $card['location'] ? ' &middot; ' . htmlspecialchars($card['location']) : '' ?></span>
                         </div>
-                        <?php if ($card['technician']): ?>
-                            <div class="kanban-card-tech">Tech: <?= htmlspecialchars($card['technician']) ?></div>
-                        <?php endif; ?>
+                        <?php foreach ($assignMap[(int) $card['id']] ?? [] as $techLabel): ?>
+                            <span class="kanban-card-tech kanban-tech-chip"><?= $techLabel ?></span>
+                        <?php endforeach; ?>
                         <div class="kanban-card-actions">
                             <?php if ($key === 'REQUEST'): ?>
                                 <button type="button" class="btn btn-sm btn-primary assign-btn" data-id="<?= (int) $card['id'] ?>">Assign Technician</button>
@@ -202,25 +202,41 @@ if (isset($flashMap[$flashStatus])):
 
 <!-- Assign Technician Modal -->
 <div class="modal-overlay" id="assignModal">
-    <div class="modal">
+    <div class="modal modal-assign">
         <div class="modal-header">
             <h2>Assign Technician</h2>
             <button type="button" class="modal-close" data-close-modal="assignModal">&times;</button>
         </div>
-        <form method="post" action="/CIANANMRO/public/index.php?page=assign_service_request" class="modal-form">
+        <form method="post" action="/CIANANMRO/public/index.php?page=assign_service_request" class="modal-form" id="assignForm">
             <input type="hidden" name="id" id="assign_sr_id">
+
             <div class="form-field">
-                <label for="assign_technician">Maintenance Technician</label>
-                <select name="technician" id="assign_technician" required>
-                    <option value="">-- Select a technician --</option>
-                    <?php foreach ($technicians as $t): ?>
-                        <option value="<?= htmlspecialchars($t['full_name']) ?>"><?= htmlspecialchars($t['full_name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <label>Maintenance Technicians <small style="color:#94a3b8">(select one or more)</small></label>
                 <?php if (empty($technicians)): ?>
                     <p class="upload-note">No maintenance technicians registered yet. Users must register with the &ldquo;Maintenance Technician&rdquo; role.</p>
+                <?php else: ?>
+                    <div class="tech-checkbox-list" id="techList">
+                        <?php foreach ($technicians as $t): ?>
+                            <label class="tech-checkbox-item">
+                                <input type="checkbox" name="technicians[]" value="<?= htmlspecialchars($t['full_name']) ?>">
+                                <span class="tech-checkbox-box" aria-hidden="true"></span>
+                                <span class="tech-checkbox-name"><?= htmlspecialchars($t['full_name']) ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </div>
+
+            <div class="form-field">
+                <label for="assign_shift">Shift</label>
+                <select name="shift" id="assign_shift" required <?= empty($technicians) ? 'disabled' : '' ?>>
+                    <option value="">-- Select shift --</option>
+                    <option value="6AM-2PM">6AM &ndash; 2PM</option>
+                    <option value="2PM-10PM">2PM &ndash; 10PM</option>
+                    <option value="10PM-6AM">10PM &ndash; 6AM</option>
+                </select>
+            </div>
+
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" data-close-modal="assignModal">Cancel</button>
                 <button type="submit" class="btn btn-primary" <?= empty($technicians) ? 'disabled' : '' ?>>Assign</button>
@@ -233,9 +249,6 @@ if (isset($flashMap[$flashStatus])):
 (function () {
     function openModal(id) {
         document.getElementById(id).classList.add('open');
-        if (id === 'assignModal') {
-            document.getElementById('assign_technician').focus();
-        }
     }
 
     function closeModal(el) {
@@ -297,6 +310,16 @@ if (isset($flashMap[$flashStatus])):
             document.getElementById('assign_sr_id').value = btn.getAttribute('data-id');
             openModal('assignModal');
         });
+    });
+
+    // Assign form: require at least one technician checked
+    document.getElementById('assignForm').addEventListener('submit', function (e) {
+        var checked = this.querySelectorAll('input[name="technicians[]"]:checked').length;
+        if (checked === 0) {
+            e.preventDefault();
+            alert('Please select at least one maintenance technician.');
+            return;
+        }
     });
 
     // ===== Drag & drop (forward-only: REQUEST -> ON GOING -> COMPLETED) =====

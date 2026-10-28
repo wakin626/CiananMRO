@@ -36,8 +36,15 @@ if (in_array($role, ['cianan_user', 'production_operator'], true) && !in_array($
     exit;
 }
 
-// Internal pages use the sidebar layout; auth pages render standalone
-$standalonePages = ['login', 'register', 'thermal_slip'];
+// Internal pages use the sidebar layout; auth pages and POST handler routes
+// render standalone (handlers must be able to send redirect headers cleanly)
+$standalonePages = [
+    'login', 'register', 'thermal_slip',
+    'submit_request', 'receive_request', 'cancel_request', 'submit_withdrawal',
+    'submit_consumable', 'update_consumable', 'upload_consumables', 'delete_consumable',
+    'export_report_csv',
+    'create_service_request', 'assign_service_request', 'complete_service_request',
+];
 if (!in_array($page, $standalonePages, true)) {
     require __DIR__ . '/../views/layout/header.php';
 }
@@ -168,6 +175,6 @@ switch ($page) {
         break;
 }
 
-if (!in_array($page, $standalonePages, true)) {
+if (!in_array($page, $standalonePages, true) && !in_array($page, $publicPages, true)) {
     require __DIR__ . '/../views/layout/footer.php';
 }

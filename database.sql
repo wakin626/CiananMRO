@@ -134,6 +134,16 @@ CREATE TABLE service_requests (
     KEY idx_status (status)
 ) ENGINE=InnoDB;
 
+-- Assigned technicians for service requests (2+ techs can be on one request)
+CREATE TABLE service_request_techs (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    service_request_id INT UNSIGNED NOT NULL,
+    technician VARCHAR(150) NOT NULL,
+    shift ENUM('6AM-2PM','2PM-10PM','10PM-6AM') NOT NULL DEFAULT '6AM-2PM',
+    KEY idx_sr (service_request_id),
+    FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Sample data
 INSERT INTO categories (name, description) VALUES
     ('Tools', 'Hand and power tools'),

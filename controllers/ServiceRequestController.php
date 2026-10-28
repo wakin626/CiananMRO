@@ -33,6 +33,9 @@ class ServiceRequestController
         $columns['COMPLETED']['cards'] = array_slice($columns['COMPLETED']['cards'], 0, 10);
         $completedTotal = $this->serviceRequest->getCompletedCount();
 
+        $ids = array_map(fn ($r) => (int) $r['id'], $all);
+        $assignMap = $this->serviceRequest->getAssignmentsMap($ids);
+
         $technicians = $this->serviceRequest->getTechnicians();
         $nextSrNo = count($all) > 0
             ? ((int) max(array_map(fn ($r) => (int) $r['id'], $all)) + 1)
@@ -56,6 +59,8 @@ class ServiceRequestController
         }
 
         $completed = $this->serviceRequest->getCompletedPaginated($perPage, ($pg - 1) * $perPage);
+        $ids = array_map(fn ($r) => (int) $r['id'], $completed);
+        $assignMap = $this->serviceRequest->getAssignmentsMap($ids);
 
         $pagination = [
             'pg'         => $pg,
@@ -171,13 +176,25 @@ class ServiceRequestController
         }
 
         $id = (int) ($_POST['id'] ?? 0);
-        $technician = trim($_POST['technician'] ?? '');
+        $technicians = (array) ($_POST['technicians'] ?? []);
+        $shift = trim($_POST['shift'] ?? '');
 
-        if ($id > 0 && $technician !== '') {
-            $this->serviceRequest->assign($id, $technician);
+        if (!in_array($shift, ['6AM-2PM', '2PM-10PM', '10PM-6AM'], true)) {
+            $shift = '';
         }
 
-        header('Location: /CIANANMRO/public/index.php?page=service_request&status=assigned');
+        // Filter to names that are actually registered maintenance technicians
+        $validNames = array_column($this->serviceRequest->getTechnicians(), 'full_name');
+        $technicians = array_values(array_intersect($technicians, $validNames));
+
+        if ($id > 0 && !empty($technicians) && $shift !== '') {
+            $assigned = $this->serviceRequest->assign($id, $technicians, $shift);
+            $status = $assigned ? 'assigned' : 'assign_error';
+        } else {
+            $status = 'assign_error';
+        }
+
+        header('Location: /CIANANMRO/public/index.php?page=service_request&status=' . $status);
         exit;
     }
 
