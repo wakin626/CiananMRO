@@ -20,10 +20,19 @@ $authController = new AuthController();
 $page = $_GET['page'] ?? 'items';
 $action = $_GET['action'] ?? '';
 
-// Public (pre-auth) routes — everything else below requires a session
+// Public (pre-auth) routes — everything else requires a session
 $publicPages = ['login', 'register'];
 if (!in_array($page, $publicPages, true) && !isset($_SESSION['user_id'])) {
     header('Location: /CIANANMRO/public/index.php?page=login');
+    exit;
+}
+
+// Role restrictions: CIANAN users & production operators use Service Request only.
+// Maintenance Inventory stays off-limits to them (maintenance technicians/admin/legacy users only).
+$role = $_SESSION['role'] ?? '';
+$srOnlyPages = ['service_request', 'create_service_request', 'assign_service_request', 'complete_service_request', 'logout', 'logout_helper'];
+if (in_array($role, ['cianan_user', 'production_operator'], true) && !in_array($page, $srOnlyPages, true)) {
+    header('Location: /CIANANMRO/public/index.php?page=service_request');
     exit;
 }
 

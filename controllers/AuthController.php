@@ -47,8 +47,28 @@ class AuthController
         $_SESSION['full_name'] = $user['full_name'];
         $_SESSION['role']      = $user['role'];
 
-        header('Location: /CIANANMRO/public/index.php?page=items');
+        $this->startFreshSession();
+
+        header('Location: /CIANANMRO/public/index.php?page=' . $this->landingPage($user['role']));
         exit;
+    }
+
+    // Fresh sessions start with all sidebar accordions collapsed so the user
+    // explores the UI themselves; fresh_login suppresses the auto-expand of
+    // the active group for one page load only.
+    private function startFreshSession(): void
+    {
+        $expiry = time() + 31536000;
+        setcookie('mi_group_open', '0', $expiry, '/CIANANMRO');
+        setcookie('sr_group_open', '0', $expiry, '/CIANANMRO');
+        setcookie('fresh_login', '1', time() + 30, '/CIANANMRO');
+    }
+
+    private function landingPage(string $role): string
+    {
+        return in_array($role, ['cianan_user', 'production_operator'], true)
+            ? 'service_request'
+            : 'items';
     }
 
     public function showRegister(string $authError = ''): void
@@ -103,7 +123,9 @@ class AuthController
         $_SESSION['full_name'] = $user['full_name'];
         $_SESSION['role']      = $user['role'];
 
-        header('Location: /CIANANMRO/public/index.php?page=items');
+        $this->startFreshSession();
+
+        header('Location: /CIANANMRO/public/index.php?page=' . $this->landingPage($user['role']));
         exit;
     }
 

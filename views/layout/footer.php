@@ -30,6 +30,10 @@
 </script>
 <script>
 (function () {
+    // One-shot: clear the fresh_login suppression so later page loads
+    // expand the active group normally again
+    document.cookie = 'fresh_login=; max-age=0; path=/CIANANMRO';
+
     var groups = document.querySelectorAll('.nav-group');
     if (groups.length === 0) return;
 

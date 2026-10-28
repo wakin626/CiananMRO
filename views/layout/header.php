@@ -14,6 +14,10 @@
 <?php
 $currentPage = $_GET['page'] ?? 'items';
 $collapsed = (isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] === '1');
+$freshLogin = isset($_COOKIE['fresh_login']);
+
+$role = $_SESSION['role'] ?? '';
+$miAllowed = in_array($role, ['admin', 'user', 'maintenance_technician'], true);
 
 $miPages = [
     'items'       => in_array($currentPage, ['items']),
@@ -34,7 +38,8 @@ $miActive = in_array(true, $miPages, true);
             </button>
         </div>
         <nav class="sidebar-nav">
-            <div class="nav-group<?= ($miActive || (isset($_COOKIE['mi_group_open']) && $_COOKIE['mi_group_open'] === '1')) ? ' open' : '' ?><?= $miActive ? ' group-active' : '' ?>">
+            <?php if ($miAllowed): ?>
+            <div class="nav-group<?= (!$freshLogin && ($miActive || (isset($_COOKIE['mi_group_open']) && $_COOKIE['mi_group_open'] === '1'))) ? ' open' : '' ?><?= $miActive ? ' group-active' : '' ?>">
                 <button type="button" class="nav-group-toggle" aria-expanded="false">
                     <span class="nav-label">Maintenance Inventory</span>
                     <span class="nav-caret" aria-hidden="true">
@@ -64,6 +69,7 @@ $miActive = in_array(true, $miPages, true);
                     </a>
                 </div>
             </div>
+            <?php endif; ?>
 
             <!-- Future top-level modules (e.g. Work Orders, Machines) go here -->
 
@@ -71,7 +77,7 @@ $miActive = in_array(true, $miPages, true);
             $srPages = ['service_request', 'create_service_request', 'assign_service_request', 'complete_service_request'];
             $srActive = in_array($currentPage, $srPages, true);
             ?>
-            <div class="nav-group<?= ($srActive || (isset($_COOKIE['sr_group_open']) && $_COOKIE['sr_group_open'] === '1')) ? ' open' : '' ?><?= $srActive ? ' group-active' : '' ?>">
+            <div class="nav-group<?= (!$freshLogin && ($srActive || (isset($_COOKIE['sr_group_open']) && $_COOKIE['sr_group_open'] === '1'))) ? ' open' : '' ?><?= $srActive ? ' group-active' : '' ?>">
                 <button type="button" class="nav-group-toggle" aria-expanded="false">
                     <span class="nav-label">Service Request</span>
                     <span class="nav-caret" aria-hidden="true">
