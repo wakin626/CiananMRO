@@ -17,9 +17,12 @@ if (isset($flashMap[$flashStatus])):
     <button type="button" class="btn btn-primary" id="openSrModal">+ New Service Request</button>
 </div>
 
-<div class="kanban-board">
+<!-- Used by drag & drop for the ON GOING -> COMPLETED transition -->
+<form method="post" action="/CIANANMRO/public/index.php?page=complete_service_request" id="completeForm"></form>
+
+<div class="kanban-board" id="kanbanBoard">
     <?php foreach ($columns as $key => $col): ?>
-        <div class="kanban-col">
+        <div class="kanban-col" data-col="<?= htmlspecialchars($key) ?>">
             <div class="kanban-col-header kanban-col-<?= strtolower(str_replace(' ', '-', $key)) ?>">
                 <span class="kanban-col-title"><?= htmlspecialchars($col['title']) ?></span>
                 <span class="kanban-col-count"><?= count($col['cards']) ?></span>
@@ -29,7 +32,7 @@ if (isset($flashMap[$flashStatus])):
                     <div class="kanban-empty">No items here.</div>
                 <?php endif; ?>
                 <?php foreach ($col['cards'] as $card): ?>
-                    <div class="kanban-card">
+                    <div class="kanban-card<?= in_array($key, ['REQUEST', 'ON GOING'], true) ? ' draggable' : '' ?>" draggable="<?= in_array($key, ['REQUEST', 'ON GOING'], true) ? 'true' : 'false' ?>" data-id="<?= (int) $card['id'] ?>" data-col="<?= htmlspecialchars($key) ?>">
                         <div class="kanban-card-top">
                             <span class="kanban-card-id">SR-<?= str_pad((string) $card['id'], 4, '0', STR_PAD_LEFT) ?></span>
                             <?php if ($card['severity']): ?>
@@ -259,6 +262,76 @@ if (isset($flashMap[$flashStatus])):
             document.getElementById('assign_sr_id').value = btn.getAttribute('data-id');
             openModal('assignModal');
         });
+    });
+
+    // ===== Drag & drop (forward-only: REQUEST -> ON GOING -> COMPLETED) =====
+    var board = document.getElementById('kanbanBoard');
+    var completeForm = document.getElementById('completeForm');
+    var COL_ORDER = { 'REQUEST': 0, 'ON GOING': 1, 'COMPLETED': 2 };
+    var dragged = null;
+
+    board.addEventListener('dragstart', function (e) {
+        var card = e.target.closest('.kanban-card');
+        if (!card || card.getAttribute('draggable') !== 'true') {
+            e.preventDefault();
+            return;
+        }
+        dragged = card;
+        card.classList.add('dragging');
+        try { e.dataTransfer.setData('text/plain', card.getAttribute('data-id')); } catch (err) {}
+        e.dataTransfer.effectAllowed = 'move';
+    });
+
+    board.addEventListener('dragend', function () {
+        if (dragged) { dragged.classList.remove('dragging'); dragged = null; }
+        board.querySelectorAll('.kanban-col').forEach(function (col) {
+            col.classList.remove('drop-ok', 'drop-deny');
+        });
+    });
+
+    board.addEventListener('dragover', function (e) {
+        if (!dragged) return;
+        var col = e.target.closest('.kanban-col');
+        board.querySelectorAll('.kanban-col').forEach(function (c) { c.classList.remove('drop-ok', 'drop-deny'); });
+        if (!col || col === dragged.closest('.kanban-col')) { e.preventDefault(); return; }
+
+        var from = COL_ORDER[dragged.getAttribute('data-col')];
+        var to = COL_ORDER[col.getAttribute('data-col')];
+        if (to === from + 1) {
+            // One step forward only: still requires completing the needed data on drop
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            col.classList.add('drop-ok');
+        } else {
+            // Backward or same column: not allowed
+            e.dataTransfer.dropEffect = 'none';
+            col.classList.add('drop-deny');
+        }
+    });
+
+    board.addEventListener('drop', function (e) {
+        if (!dragged) return;
+        var col = e.target.closest('.kanban-col');
+        if (!col || col === dragged.closest('.kanban-col')) return;
+
+        var from = COL_ORDER[dragged.getAttribute('data-col')];
+        var to = COL_ORDER[col.getAttribute('data-col')];
+        if (to <= from) return; // deny drop silently
+
+        e.preventDefault();
+        var cardId = dragged.getAttribute('data-id');
+
+        if (to === 1) {
+            // REQUEST -> ON GOING: needs the technician (assign modal)
+            document.getElementById('assign_sr_id').value = cardId;
+            openModal('assignModal');
+        } else if (to === 2) {
+            // ON GOING -> COMPLETED: confirm, then submit completion
+            if (confirm('Mark ' + 'SR-' + String(cardId).padStart(4, '0') + ' as DONE?')) {
+                completeForm.innerHTML = '<input type="hidden" name="id" value="' + cardId + '">';
+                completeForm.submit();
+            }
+        }
     });
 })();
 </script>

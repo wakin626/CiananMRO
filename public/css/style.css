@@ -373,6 +373,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 200px;
+    position: relative;
 }
 
 .kanban-col-header {
@@ -452,6 +453,42 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+}
+
+/* Drag & drop states */
+.kanban-card.draggable {
+    cursor: grab;
+}
+
+.kanban-card.dragging {
+    opacity: 0.55;
+    cursor: grabbing;
+    transform: rotate(2deg) scale(1.02);
+    box-shadow: 0 10px 22px rgba(47, 48, 41, 0.25);
+    border-color: var(--sage-med);
+}
+
+.kanban-col.drop-ok {
+    outline: 2px dashed var(--sage-med);
+    outline-offset: 3px;
+    background: var(--sage-tint);
+    border-radius: 8px;
+}
+
+.kanban-col.drop-ok::before {
+    content: 'Drop to continue';
+    position: absolute;
+    right: 1rem;
+    transform: translateY(-2.6rem);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #5C7057;
+}
+
+.kanban-col.drop-deny {
+    outline: 2px dashed #fca5a5;
+    outline-offset: 3px;
+    opacity: 0.6;
 }
 
 .kanban-card-id {
