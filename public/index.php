@@ -137,6 +137,12 @@ switch ($page) {
         $serviceRequestController->dashboard();
         break;
 
+    case 'completed_sr':
+        $title = 'Service Request';
+        $serviceRequestController = new ServiceRequestController();
+        $serviceRequestController->completed();
+        break;
+
     case 'create_service_request':
         $title = 'Service Request';
         $serviceRequestController = new ServiceRequestController();

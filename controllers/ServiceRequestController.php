@@ -15,25 +15,56 @@ class ServiceRequestController
 
     public function dashboard(): void
     {
-        $requests = $this->serviceRequest->getAll();
+        $all = $this->serviceRequest->getAll();
 
         $columns = [
             'REQUEST'   => ['title' => 'Request',   'cards' => []],
             'ON GOING'  => ['title' => 'On Going',  'cards' => []],
             'COMPLETED' => ['title' => 'Completed', 'cards' => []],
         ];
-        foreach ($requests as $r) {
+        foreach ($all as $r) {
             if (isset($columns[$r['status']])) {
                 $columns[$r['status']]['cards'][] = $r;
             }
         }
 
+        // Keep the board light: only the recent completions stay on the kanban,
+        // the rest lives in the Completed Service Requests sub-tab
+        $columns['COMPLETED']['cards'] = array_slice($columns['COMPLETED']['cards'], 0, 10);
+        $completedTotal = $this->serviceRequest->getCompletedCount();
+
         $technicians = $this->serviceRequest->getTechnicians();
-        $nextSrNo = count($requests) > 0
-            ? ((int) max(array_map(fn ($r) => (int) $r['id'], $requests)) + 1)
+        $nextSrNo = count($all) > 0
+            ? ((int) max(array_map(fn ($r) => (int) $r['id'], $all)) + 1)
             : 1;
 
         require __DIR__ . '/../views/service_request/index.php';
+    }
+
+    public function completed(): void
+    {
+        $perPage = (int) ($_GET['per_page'] ?? 10);
+        if (!in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
+        $pg = max(1, (int) ($_GET['pg'] ?? 1));
+
+        $total = $this->serviceRequest->getCompletedCount();
+        $totalPages = max(1, (int) ceil($total / $perPage));
+        if ($pg > $totalPages) {
+            $pg = $totalPages;
+        }
+
+        $completed = $this->serviceRequest->getCompletedPaginated($perPage, ($pg - 1) * $perPage);
+
+        $pagination = [
+            'pg'         => $pg,
+            'perPage'    => $perPage,
+            'total'      => $total,
+            'totalPages' => $totalPages,
+        ];
+
+        require __DIR__ . '/../views/service_request/completed.php';
     }
 
     public function handleCreate(): void

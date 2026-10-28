@@ -11,7 +11,7 @@ if (isset($flashMap[$flashStatus])):
     <div class="alert alert-<?= $flashType ?>"><?= $flashText ?></div>
 <?php endif; ?>
 
-<h1 class="page-title">Service Request</h1>
+<h1 class="page-title">Service Request Board</h1>
 
 <div class="toolbar">
     <button type="button" class="btn btn-primary" id="openSrModal">+ New Service Request</button>
@@ -80,6 +80,9 @@ if (isset($flashMap[$flashStatus])):
                         </div>
                     </div>
                 <?php endforeach; ?>
+                <?php if ($key === 'COMPLETED' && $completedTotal > count($col['cards'])): ?>
+                    <a class="kanban-view-all" href="/CIANANMRO/public/index.php?page=completed_sr">View all <?= (int) $completedTotal ?> &rarr;</a>
+                <?php endif; ?>
             </div>
         </div>
     <?php endforeach; ?>

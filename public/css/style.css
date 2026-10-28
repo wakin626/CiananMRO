@@ -562,6 +562,23 @@ body {
     color: #fff;
 }
 
+.kanban-view-all {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #5C7057;
+    text-decoration: none;
+    padding: 0.55rem;
+    border: 1px dashed var(--sage-light);
+    border-radius: 8px;
+    transition: background 0.15s ease;
+}
+
+.kanban-view-all:hover {
+    background: var(--sage-tint);
+}
+
 .kanban-card-desc {
     color: var(--text-dark);
     font-size: 0.9rem;

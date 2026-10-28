@@ -74,7 +74,7 @@ $miActive = in_array(true, $miPages, true);
             <!-- Future top-level modules (e.g. Work Orders, Machines) go here -->
 
             <?php
-            $srPages = ['service_request', 'create_service_request', 'assign_service_request', 'complete_service_request'];
+            $srPages = ['service_request', 'completed_sr', 'create_service_request', 'assign_service_request', 'complete_service_request'];
             $srActive = in_array($currentPage, $srPages, true);
             ?>
             <div class="nav-group<?= (!$freshLogin && ($srActive || (isset($_COOKIE['sr_group_open']) && $_COOKIE['sr_group_open'] === '1'))) ? ' open' : '' ?><?= $srActive ? ' group-active' : '' ?>">
@@ -86,8 +86,12 @@ $miActive = in_array(true, $miPages, true);
                 </button>
                 <div class="nav-submenu">
                     <a href="/CIANANMRO/public/index.php?page=service_request"
-                       class="nav-link nav-sub <?= $srActive ? 'active' : '' ?>">
+                       class="nav-link nav-sub <?= $currentPage === 'service_request' ? 'active' : '' ?>">
                         <span class="nav-label">SR Dashboard</span>
+                    </a>
+                    <a href="/CIANANMRO/public/index.php?page=completed_sr"
+                       class="nav-link nav-sub <?= in_array($currentPage, ['completed_sr', 'complete_service_request']) ? 'active' : '' ?>">
+                        <span class="nav-label">Completed Service Requests</span>
                     </a>
                 </div>
             </div>

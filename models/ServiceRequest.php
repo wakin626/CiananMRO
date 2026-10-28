@@ -22,6 +22,40 @@ class ServiceRequest
         return $this->db->query($sql)->fetchAll();
     }
 
+    public function getRecentCompleted(int $limit = 10): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM service_requests
+             WHERE status = 'COMPLETED'
+             ORDER BY completed_at DESC
+             LIMIT :limit"
+        );
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getCompletedCount(): int
+    {
+        return (int) $this->db->query(
+            "SELECT COUNT(*) FROM service_requests WHERE status = 'COMPLETED'"
+        )->fetchColumn();
+    }
+
+    public function getCompletedPaginated(int $limit, int $offset): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM service_requests
+             WHERE status = 'COMPLETED'
+             ORDER BY completed_at DESC, id DESC
+             LIMIT :limit OFFSET :offset"
+        );
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function getTechnicians(): array
     {
         return $this->db->query(
