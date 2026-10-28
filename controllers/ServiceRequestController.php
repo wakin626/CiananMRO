@@ -168,10 +168,18 @@ class ServiceRequestController
         return 'public/uploads/service_requests/' . $filename;
     }
 
+    private const MANAGE_ROLES = ['admin', 'user', 'maintenance_technician'];
+
     public function handleAssign(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /CIANANMRO/public/index.php?page=service_request');
+            exit;
+        }
+
+        $role = $_SESSION['role'] ?? '';
+        if (!in_array($role, self::MANAGE_ROLES, true)) {
+            header('Location: /CIANANMRO/public/index.php?page=service_request&status=sr_forbidden');
             exit;
         }
 
@@ -202,6 +210,12 @@ class ServiceRequestController
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /CIANANMRO/public/index.php?page=service_request');
+            exit;
+        }
+
+        $role = $_SESSION['role'] ?? '';
+        if (!in_array($role, self::MANAGE_ROLES, true)) {
+            header('Location: /CIANANMRO/public/index.php?page=service_request&status=sr_forbidden');
             exit;
         }
 

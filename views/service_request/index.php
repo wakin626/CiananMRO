@@ -1,12 +1,20 @@
 <?php
 $flashStatus = $_GET['status'] ?? '';
 $flashMap = [
-    'created'      => ['Service request created. It is now listed under Request.', 'success'],
-    'assigned'     => ['Technician assigned &mdash; request moved to On Going.', 'success'],
-    'completed'    => ['Request marked as completed.', 'success'],
-    'create_error' => ['Could not save the service request &mdash; check the fields and try again.', 'danger'],
+    'created'       => ['Service request created. It is now listed under Request.', 'success'],
+    'assigned'      => ['Technician picked &mdash; request moved to On Going.', 'success'],
+    'completed'     => ['Request marked as completed.', 'success'],
+    'create_error'  => ['Could not save the service request &mdash; check the fields and try again.', 'danger'],
+    'assign_error'  => ['Could not pick technicians &mdash; select at least one and a shift.', 'danger'],
+    'sr_forbidden'  => ['Access denied &mdash; picking and completing requests is for admins and technicians.', 'danger'],
 ];
-if (isset($flashMap[$flashStatus])):
+
+// Only admins/legacy users/technicians can pick & complete; CIANAN users and
+// production operators can only create requests
+$canManage = in_array($_SESSION['role'] ?? '', ['admin', 'user', 'maintenance_technician'], true);
+$currentUserName = $_SESSION['full_name'] ?? '';
+?>
+<?php if (isset($flashMap[$flashStatus])):
     [$flashText, $flashType] = $flashMap[$flashStatus]; ?>
     <div class="alert alert-<?= $flashType ?>"><?= $flashText ?></div>
 <?php endif; ?>
@@ -32,7 +40,7 @@ if (isset($flashMap[$flashStatus])):
                     <div class="kanban-empty">No items here.</div>
                 <?php endif; ?>
                 <?php foreach ($col['cards'] as $card): ?>
-                    <div class="kanban-card<?= in_array($key, ['REQUEST', 'ON GOING'], true) ? ' draggable' : '' ?>" draggable="<?= in_array($key, ['REQUEST', 'ON GOING'], true) ? 'true' : 'false' ?>" data-id="<?= (int) $card['id'] ?>" data-col="<?= htmlspecialchars($key) ?>">
+                    <div class="kanban-card<?= ($canManage && in_array($key, ['REQUEST', 'ON GOING'], true)) ? ' draggable' : '' ?>" draggable="<?= ($canManage && in_array($key, ['REQUEST', 'ON GOING'], true)) ? 'true' : 'false' ?>" data-id="<?= (int) $card['id'] ?>" data-col="<?= htmlspecialchars($key) ?>">
                         <div class="kanban-card-top">
                             <span class="kanban-card-id">SR-<?= str_pad((string) $card['id'], 4, '0', STR_PAD_LEFT) ?></span>
                             <?php if ($card['severity']): ?>
@@ -67,14 +75,14 @@ if (isset($flashMap[$flashStatus])):
                             <span class="kanban-card-tech kanban-tech-chip"><?= $techLabel ?></span>
                         <?php endforeach; ?>
                         <div class="kanban-card-actions">
-                            <?php if ($key === 'REQUEST'): ?>
-                                <button type="button" class="btn btn-sm btn-primary assign-btn" data-id="<?= (int) $card['id'] ?>">Assign Technician</button>
-                            <?php elseif ($key === 'ON GOING'): ?>
+                            <?php if ($canManage && $key === 'REQUEST'): ?>
+                                <button type="button" class="btn btn-sm btn-primary assign-btn" data-id="<?= (int) $card['id'] ?>">Pick Technician</button>
+                            <?php elseif ($canManage && $key === 'ON GOING'): ?>
                                 <form method="post" action="/CIANANMRO/public/index.php?page=complete_service_request">
                                     <input type="hidden" name="id" value="<?= (int) $card['id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-primary">Mark Done</button>
                                 </form>
-                            <?php else: ?>
+                            <?php elseif ($key === 'COMPLETED'): ?>
                                 <span class="kanban-done-date">Done: <?= htmlspecialchars(date('Y-m-d', strtotime($card['completed_at']))) ?></span>
                             <?php endif; ?>
                         </div>
@@ -204,7 +212,7 @@ if (isset($flashMap[$flashStatus])):
 <div class="modal-overlay" id="assignModal">
     <div class="modal modal-assign">
         <div class="modal-header">
-            <h2>Assign Technician</h2>
+            <h2>Pick Technician</h2>
             <button type="button" class="modal-close" data-close-modal="assignModal">&times;</button>
         </div>
         <form method="post" action="/CIANANMRO/public/index.php?page=assign_service_request" class="modal-form" id="assignForm">
@@ -217,7 +225,7 @@ if (isset($flashMap[$flashStatus])):
                 <?php else: ?>
                     <div class="tech-checkbox-list" id="techList">
                         <?php foreach ($technicians as $t): ?>
-                            <label class="tech-checkbox-item">
+                            <label class="tech-checkbox-item" data-name="<?= htmlspecialchars($t['full_name']) ?>">
                                 <input type="checkbox" name="technicians[]" value="<?= htmlspecialchars($t['full_name']) ?>">
                                 <span class="tech-checkbox-box" aria-hidden="true"></span>
                                 <span class="tech-checkbox-name"><?= htmlspecialchars($t['full_name']) ?></span>
@@ -239,7 +247,7 @@ if (isset($flashMap[$flashStatus])):
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" data-close-modal="assignModal">Cancel</button>
-                <button type="submit" class="btn btn-primary" <?= empty($technicians) ? 'disabled' : '' ?>>Assign</button>
+                <button type="submit" class="btn btn-primary" <?= empty($technicians) ? 'disabled' : '' ?>>Pick</button>
             </div>
         </form>
     </div>
@@ -253,6 +261,18 @@ if (isset($flashMap[$flashStatus])):
 
     function closeModal(el) {
         el.classList.remove('open');
+
+        // Pick modal: reset the selection every time it closes
+        if (el.id === 'assignModal') {
+            resetAssignForm();
+        }
+    }
+
+    function resetAssignForm() {
+        document.querySelectorAll('#techList input[type="checkbox"]').forEach(function (c) {
+            c.checked = false;
+        });
+        document.getElementById('assign_shift').value = '';
     }
 
     document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
@@ -312,7 +332,14 @@ if (isset($flashMap[$flashStatus])):
         });
     });
 
-    // Assign form: require at least one technician checked
+    // Pick modal: auto-tick the logged-in technician's own name when they
+    // pick a request (button or drag)
+    var selfItem = document.querySelector('#techList .tech-checkbox-item[data-name="' + String(<?= json_encode($currentUserName) ?>).replace(/"/g, '\\"') + '"]');
+    if (selfItem) {
+        selfItem.querySelector('input[type="checkbox"]').checked = true;
+    }
+
+    // Pick form: require at least one technician checked
     document.getElementById('assignForm').addEventListener('submit', function (e) {
         var checked = this.querySelectorAll('input[name="technicians[]"]:checked').length;
         if (checked === 0) {
