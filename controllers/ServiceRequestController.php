@@ -72,6 +72,13 @@ class ServiceRequestController
                 $data['severity'] = '';
             }
 
+            // Nature of request: MACHINE REPAIR straight, OTHERS stored as typed
+            $nature = strtoupper(trim($_POST['nature_of_request'] ?? ''));
+            if ($nature === 'OTHERS') {
+                $nature = trim($_POST['nature_custom'] ?? '');
+            }
+            $data['nature_of_request'] = $nature;
+
             $picture = $this->storePicture();
             if ($picture !== '' && $picture !== null) {
                 $data['picture_path'] = $picture;

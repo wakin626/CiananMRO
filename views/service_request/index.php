@@ -43,6 +43,9 @@ if (isset($flashMap[$flashStatus])):
                             <img class="kanban-card-pic" src="/CIANANMRO/<?= htmlspecialchars($card['picture_path']) ?>" alt="Request photo">
                         <?php endif; ?>
                         <div class="kanban-card-desc"><?= nl2br(htmlspecialchars($card['description'])) ?></div>
+                        <?php if ($card['nature_of_request']): ?>
+                            <span class="kanban-chip kanban-nature"><?= htmlspecialchars($card['nature_of_request']) ?></span>
+                        <?php endif; ?>
                         <?php if ($card['equipment_name'] || $card['machine_tag']): ?>
                             <div class="kanban-card-chips">
                                 <?php if ($card['equipment_name']): ?>
@@ -157,6 +160,21 @@ if (isset($flashMap[$flashStatus])):
                 </div>
             </div>
 
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="sr_nature">Nature of Request</label>
+                    <select name="nature_of_request" id="sr_nature" required>
+                        <option value="">-- Select nature of request --</option>
+                        <option value="MACHINE REPAIR">Machine Repair</option>
+                        <option value="OTHERS">Others</option>
+                    </select>
+                </div>
+                <div class="form-field" id="sr_nature_custom_field" style="display:none">
+                    <label for="sr_nature_custom">Type the nature of request</label>
+                    <input type="text" name="nature_custom" id="sr_nature_custom" maxlength="100" placeholder="e.g. CONVEYOR BELT REPLACEMENT">
+                </div>
+            </div>
+
             <div class="form-field">
                 <label for="sr_machine_tag">Machine Tag (if applicable)</label>
                 <input type="text" name="machine_tag" id="sr_machine_tag">
@@ -255,6 +273,19 @@ if (isset($flashMap[$flashStatus])):
         deptOthersField.style.display = showOthers ? '' : 'none';
         deptCustom.required = showOthers;
         if (!showOthers) deptCustom.value = '';
+    });
+
+    // Nature of request OTHERS: reveal the typed nature input; the tile
+    // gets classified by this on the kanban cards
+    var natureSelect = document.getElementById('sr_nature');
+    var natureCustomField = document.getElementById('sr_nature_custom_field');
+    var natureCustom = document.getElementById('sr_nature_custom');
+
+    natureSelect.addEventListener('change', function () {
+        var showOthers = natureSelect.value === 'OTHERS';
+        natureCustomField.style.display = showOthers ? '' : 'none';
+        natureCustom.required = showOthers;
+        if (!showOthers) natureCustom.value = '';
     });
 
     document.querySelectorAll('.assign-btn').forEach(function (btn) {

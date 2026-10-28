@@ -122,6 +122,7 @@ CREATE TABLE service_requests (
     location VARCHAR(150) DEFAULT NULL,
     plant ENUM('SPRING BOOK','WILLYDRIVE') DEFAULT NULL,
     severity ENUM('CRITICAL','HIGH','MODERATE','LOW') DEFAULT NULL,
+    nature_of_request VARCHAR(100) DEFAULT NULL,
     equipment_name VARCHAR(150) DEFAULT NULL,
     machine_tag VARCHAR(100) DEFAULT NULL,
     picture_path VARCHAR(255) DEFAULT NULL,

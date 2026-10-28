@@ -557,6 +557,11 @@ body {
     padding: 0.1rem 0.45rem;
 }
 
+.kanban-nature {
+    background: #5C7057;
+    color: #fff;
+}
+
 .kanban-card-desc {
     color: var(--text-dark);
     font-size: 0.9rem;
