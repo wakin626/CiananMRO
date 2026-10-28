@@ -13,9 +13,27 @@ class ServiceRequestController
         $this->serviceRequest = new ServiceRequest($database->getConnection());
     }
 
+    private const MANAGE_ROLES = ['admin', 'user', 'maintenance_technician'];
+    private const REQUESTOR_ROLES = ['cianan_user', 'production_operator'];
+
+    private function isScopedUser(): bool
+    {
+        return in_array($_SESSION['role'] ?? '', self::REQUESTOR_ROLES, true);
+    }
+
     public function dashboard(): void
     {
         $all = $this->serviceRequest->getAll();
+
+        // next SR number comes from the whole table, not just the user's slice
+        $nextSrNo = count($all) > 0
+            ? ((int) max(array_map(fn ($r) => (int) $r['id'], $all)) + 1)
+            : 1;
+
+        if ($this->isScopedUser()) {
+            $me = $_SESSION['full_name'] ?? '';
+            $all = array_values(array_filter($all, fn ($r) => $r['requested_by'] === $me));
+        }
 
         $columns = [
             'REQUEST'   => ['title' => 'Request',   'cards' => []],
@@ -31,15 +49,17 @@ class ServiceRequestController
         // Keep the board light: only the recent completions stay on the kanban,
         // the rest lives in the Completed Service Requests sub-tab
         $columns['COMPLETED']['cards'] = array_slice($columns['COMPLETED']['cards'], 0, 10);
-        $completedTotal = $this->serviceRequest->getCompletedCount();
 
         $ids = array_map(fn ($r) => (int) $r['id'], $all);
         $assignMap = $this->serviceRequest->getAssignmentsMap($ids);
 
+        $scoped = $this->isScopedUser();
+        $emptyMessage = "You have not created any service request yet. Use &ldquo;+ New Service Request&rdquo; above to file your first one.";
+        $completedTotal = $scoped
+            ? $this->serviceRequest->getCompletedCount($_SESSION['full_name'] ?? '')
+            : $this->serviceRequest->getCompletedCount();
+
         $technicians = $this->serviceRequest->getTechnicians();
-        $nextSrNo = count($all) > 0
-            ? ((int) max(array_map(fn ($r) => (int) $r['id'], $all)) + 1)
-            : 1;
 
         require __DIR__ . '/../views/service_request/index.php';
     }
@@ -52,13 +72,16 @@ class ServiceRequestController
         }
         $pg = max(1, (int) ($_GET['pg'] ?? 1));
 
-        $total = $this->serviceRequest->getCompletedCount();
+        $scoped = $this->isScopedUser();
+        $me = $scoped ? ($_SESSION['full_name'] ?? '') : '';
+
+        $total = $this->serviceRequest->getCompletedCount($me);
         $totalPages = max(1, (int) ceil($total / $perPage));
         if ($pg > $totalPages) {
             $pg = $totalPages;
         }
 
-        $completed = $this->serviceRequest->getCompletedPaginated($perPage, ($pg - 1) * $perPage);
+        $completed = $this->serviceRequest->getCompletedPaginated($perPage, ($pg - 1) * $perPage, $me);
         $ids = array_map(fn ($r) => (int) $r['id'], $completed);
         $assignMap = $this->serviceRequest->getAssignmentsMap($ids);
 
@@ -167,8 +190,6 @@ class ServiceRequestController
 
         return 'public/uploads/service_requests/' . $filename;
     }
-
-    private const MANAGE_ROLES = ['admin', 'user', 'maintenance_technician'];
 
     public function handleAssign(): void
     {

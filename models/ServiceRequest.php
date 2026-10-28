@@ -35,21 +35,33 @@ class ServiceRequest
         return $stmt->fetchAll();
     }
 
-    public function getCompletedCount(): int
+    public function getCompletedCount(string $requestedBy = ''): int
     {
+        if ($requestedBy !== '') {
+            $stmt = $this->db->prepare(
+                "SELECT COUNT(*) FROM service_requests WHERE status = 'COMPLETED' AND requested_by = :me"
+            );
+            $stmt->execute([':me' => $requestedBy]);
+            return (int) $stmt->fetchColumn();
+        }
         return (int) $this->db->query(
             "SELECT COUNT(*) FROM service_requests WHERE status = 'COMPLETED'"
         )->fetchColumn();
     }
 
-    public function getCompletedPaginated(int $limit, int $offset): array
+    public function getCompletedPaginated(int $limit, int $offset, string $requestedBy = ''): array
     {
-        $stmt = $this->db->prepare(
-            "SELECT * FROM service_requests
-             WHERE status = 'COMPLETED'
-             ORDER BY completed_at DESC, id DESC
-             LIMIT :limit OFFSET :offset"
-        );
+        $sql = "SELECT * FROM service_requests WHERE status = 'COMPLETED'";
+        $params = [];
+        if ($requestedBy !== '') {
+            $sql .= ' AND requested_by = :me';
+            $params[':me'] = $requestedBy;
+        }
+        $sql .= ' ORDER BY completed_at DESC, id DESC LIMIT :limit OFFSET :offset';
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();

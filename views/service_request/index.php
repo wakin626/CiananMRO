@@ -28,6 +28,17 @@ $currentUserName = $_SESSION['full_name'] ?? '';
 <!-- Used by drag & drop for the ON GOING -> COMPLETED transition -->
 <form method="post" action="/CIANANMRO/public/index.php?page=complete_service_request" id="completeForm"></form>
 
+<?php $totalCardsOnBoard = count($columns['REQUEST']['cards']) + count($columns['ON GOING']['cards']) + count($columns['COMPLETED']['cards']); ?>
+<?php if ($scoped && $totalCardsOnBoard === 0): ?>
+    <div class="sr-empty-board">
+        <div class="sr-empty-icon">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+        </div>
+        <strong>Nothing here yet</strong>
+        <p><?= $emptyMessage ?></p>
+    </div>
+<?php endif; ?>
+
 <div class="kanban-board" id="kanbanBoard">
     <?php foreach ($columns as $key => $col): ?>
         <div class="kanban-col" data-col="<?= htmlspecialchars($key) ?>">

@@ -30,7 +30,7 @@ if (!in_array($page, $publicPages, true) && !isset($_SESSION['user_id'])) {
 // Role restrictions: CIANAN users & production operators use Service Request only.
 // Maintenance Inventory stays off-limits to them (maintenance technicians/admin/legacy users only).
 $role = $_SESSION['role'] ?? '';
-$srOnlyPages = ['service_request', 'create_service_request', 'assign_service_request', 'complete_service_request', 'logout'];
+$srOnlyPages = ['service_request', 'completed_sr', 'create_service_request', 'assign_service_request', 'complete_service_request', 'logout'];
 if (in_array($role, ['cianan_user', 'production_operator'], true) && !in_array($page, $srOnlyPages, true)) {
     header('Location: /CIANANMRO/public/index.php?page=service_request');
     exit;
