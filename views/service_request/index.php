@@ -169,15 +169,14 @@ if (isset($flashMap[$flashStatus])):
                         <option value="OTHERS">Others</option>
                     </select>
                 </div>
+                <div class="form-field" id="sr_machine_tag_field">
+                    <label for="sr_machine_tag">Machine Tag (if applicable)</label>
+                    <input type="text" name="machine_tag" id="sr_machine_tag">
+                </div>
                 <div class="form-field" id="sr_nature_custom_field" style="display:none">
                     <label for="sr_nature_custom">Type the nature of request</label>
                     <input type="text" name="nature_custom" id="sr_nature_custom" maxlength="100" placeholder="e.g. CONVEYOR BELT REPLACEMENT">
                 </div>
-            </div>
-
-            <div class="form-field">
-                <label for="sr_machine_tag">Machine Tag (if applicable)</label>
-                <input type="text" name="machine_tag" id="sr_machine_tag">
             </div>
 
             <div class="form-field">
@@ -275,15 +274,17 @@ if (isset($flashMap[$flashStatus])):
         if (!showOthers) deptCustom.value = '';
     });
 
-    // Nature of request OTHERS: reveal the typed nature input; the tile
-    // gets classified by this on the kanban cards
+    // Nature of request OTHERS: the right half of the row swaps between the
+    // Machine Tag field (default) and the typed nature input
     var natureSelect = document.getElementById('sr_nature');
     var natureCustomField = document.getElementById('sr_nature_custom_field');
     var natureCustom = document.getElementById('sr_nature_custom');
+    var machineTagField = document.getElementById('sr_machine_tag_field');
 
     natureSelect.addEventListener('change', function () {
         var showOthers = natureSelect.value === 'OTHERS';
         natureCustomField.style.display = showOthers ? '' : 'none';
+        machineTagField.style.display = showOthers ? 'none' : '';
         natureCustom.required = showOthers;
         if (!showOthers) natureCustom.value = '';
     });
