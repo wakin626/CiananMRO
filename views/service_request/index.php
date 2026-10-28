@@ -156,8 +156,7 @@ if (isset($flashMap[$flashStatus])):
 
             <div class="form-field">
                 <label for="sr_machine_tag">Machine Tag (if applicable)</label>
-                    <input type="text" name="machine_tag" id="sr_machine_tag">
-                </div>
+                <input type="text" name="machine_tag" id="sr_machine_tag">
             </div>
 
             <div class="form-field">
