@@ -45,14 +45,21 @@ class ServiceRequestController
 
         $description = trim($_POST['description'] ?? '');
         $requestedBy = trim($_POST['requested_by'] ?? '');
+        $department = trim($_POST['department'] ?? '');
 
         if ($description !== '' && $requestedBy !== '') {
+            // OTHERS: store the typed department so it shows in the records
+            if ($department === 'OTHERS') {
+                $department = trim($_POST['department_custom'] ?? '');
+            }
+
             $data = [
                 'description'     => $description,
                 'requested_by'    => $requestedBy,
-                'department'      => trim($_POST['department'] ?? ''),
+                'department'      => $department,
                 'location'        => trim($_POST['location'] ?? ''),
                 'plant'           => strtoupper(trim($_POST['plant'] ?? '')),
+                'severity'        => strtoupper(trim($_POST['severity'] ?? '')),
                 'equipment_name'  => trim($_POST['equipment_name'] ?? ''),
                 'machine_tag'     => trim($_POST['machine_tag'] ?? ''),
                 'picture_path'    => '',
@@ -60,6 +67,9 @@ class ServiceRequestController
 
             if (in_array($data['plant'], ['SPRING BOOK', 'WILLYDRIVE'], true) === false) {
                 $data['plant'] = '';
+            }
+            if (in_array($data['severity'], ['CRITICAL', 'HIGH', 'MODERATE', 'LOW'], true) === false) {
+                $data['severity'] = '';
             }
 
             $picture = $this->storePicture();

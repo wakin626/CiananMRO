@@ -30,7 +30,12 @@ if (isset($flashMap[$flashStatus])):
                 <?php endif; ?>
                 <?php foreach ($col['cards'] as $card): ?>
                     <div class="kanban-card">
-                        <div class="kanban-card-id">SR-<?= str_pad((string) $card['id'], 4, '0', STR_PAD_LEFT) ?></div>
+                        <div class="kanban-card-top">
+                            <span class="kanban-card-id">SR-<?= str_pad((string) $card['id'], 4, '0', STR_PAD_LEFT) ?></span>
+                            <?php if ($card['severity']): ?>
+                                <span class="kanban-sev sev-<?= strtolower($card['severity']) ?>"><?= htmlspecialchars($card['severity']) ?></span>
+                            <?php endif; ?>
+                        </div>
                         <?php if (empty($card['picture_path']) === false): ?>
                             <img class="kanban-card-pic" src="/CIANANMRO/<?= htmlspecialchars($card['picture_path']) ?>" alt="Request photo">
                         <?php endif; ?>
@@ -101,18 +106,30 @@ if (isset($flashMap[$flashStatus])):
                 </div>
                 <div class="form-field">
                     <label for="sr_department">Department</label>
-                    <input type="text" name="department" id="sr_department">
+                    <select name="department" id="sr_department" required>
+                        <option value="">-- Select department --</option>
+                        <option value="HRA">HRA</option>
+                        <option value="FINANCE">FINANCE</option>
+                        <option value="WAREHOUSE">WAREHOUSE</option>
+                        <option value="PRODUCTION">PRODUCTION</option>
+                        <option value="QC">QC</option>
+                        <option value="OTHERS">OTHERS</option>
+                    </select>
+                </div>
+                <div class="form-field" id="sr_dept_others_field" style="display:none">
+                    <label for="sr_department_custom">What department are you in?</label>
+                    <input type="text" name="department_custom" id="sr_department_custom" maxlength="100" placeholder="e.g. LOGISTICS">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-field">
                     <label for="sr_location">Location / Area</label>
-                    <input type="text" name="location" id="sr_location">
+                    <input type="text" name="location" id="sr_location" required>
                 </div>
                 <div class="form-field">
                     <label for="sr_plant">Plant</label>
-                    <select name="plant" id="sr_plant">
+                    <select name="plant" id="sr_plant" required>
                         <option value="">-- Select plant --</option>
                         <option value="SPRING BOOK">Spring Book</option>
                         <option value="WILLYDRIVE">Willydrive</option>
@@ -122,11 +139,23 @@ if (isset($flashMap[$flashStatus])):
 
             <div class="form-row">
                 <div class="form-field">
+                    <label for="sr_severity">Severity Level</label>
+                    <select name="severity" id="sr_severity" required>
+                        <option value="">-- Select severity --</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="HIGH">High</option>
+                        <option value="MODERATE">Moderate</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                </div>
+                <div class="form-field">
                     <label for="sr_equipment">Equipment / Machine Name</label>
                     <input type="text" name="equipment_name" id="sr_equipment">
                 </div>
-                <div class="form-field">
-                    <label for="sr_machine_tag">Machine Tag (if applicable)</label>
+            </div>
+
+            <div class="form-field">
+                <label for="sr_machine_tag">Machine Tag (if applicable)</label>
                     <input type="text" name="machine_tag" id="sr_machine_tag">
                 </div>
             </div>
@@ -212,6 +241,18 @@ if (isset($flashMap[$flashStatus])):
             ' ' + two(now.getHours()) + ':' + two(now.getMinutes());
         document.getElementById('sr_picture').value = '';
         openModal('srModal');
+    });
+
+    // Department OTHERS: reveal the free-text department input
+    var deptSelect = document.getElementById('sr_department');
+    var deptOthersField = document.getElementById('sr_dept_others_field');
+    var deptCustom = document.getElementById('sr_department_custom');
+
+    deptSelect.addEventListener('change', function () {
+        var showOthers = deptSelect.value === 'OTHERS';
+        deptOthersField.style.display = showOthers ? '' : 'none';
+        deptCustom.required = showOthers;
+        if (!showOthers) deptCustom.value = '';
     });
 
     document.querySelectorAll('.assign-btn').forEach(function (btn) {

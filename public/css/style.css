@@ -475,6 +475,43 @@ body {
     gap: 0.3rem;
 }
 
+.kanban-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.kanban-sev {
+    flex: none;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 10px;
+    padding: 0.12rem 0.5rem;
+}
+
+.kanban-sev.sev-critical {
+    background: #FEE2E2;
+    color: #B91C1C;
+}
+
+.kanban-sev.sev-high {
+    background: #FFEDD5;
+    color: #C2410C;
+}
+
+.kanban-sev.sev-moderate {
+    background: #FEF9C3;
+    color: #A16207;
+}
+
+.kanban-sev.sev-low {
+    background: #DCFCE7;
+    color: #15803D;
+}
+
 .kanban-chip {
     font-size: 0.7rem;
     background: var(--sage-accent);

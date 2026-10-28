@@ -35,10 +35,10 @@ class ServiceRequest
     {
         $stmt = $this->db->prepare(
             "INSERT INTO service_requests
-                (description, requested_by, department, location, plant,
+                (description, requested_by, department, location, plant, severity,
                  equipment_name, machine_tag, picture_path)
              VALUES
-                (:description, :requested_by, :department, :location, :plant,
+                (:description, :requested_by, :department, :location, :plant, :severity,
                  :equipment_name, :machine_tag, :picture_path)"
         );
         return $stmt->execute([
@@ -47,6 +47,7 @@ class ServiceRequest
             ':department'      => $data['department'] !== '' ? $data['department'] : null,
             ':location'        => $data['location'] !== '' ? $data['location'] : null,
             ':plant'           => $data['plant'] !== '' ? $data['plant'] : null,
+            ':severity'        => $data['severity'] !== '' ? $data['severity'] : null,
             ':equipment_name'  => $data['equipment_name'] !== '' ? $data['equipment_name'] : null,
             ':machine_tag'     => $data['machine_tag'] !== '' ? $data['machine_tag'] : null,
             ':picture_path'    => $data['picture_path'] !== '' ? $data['picture_path'] : null,
